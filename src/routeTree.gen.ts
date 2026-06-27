@@ -9,10 +9,16 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as FavoritosRouteImport } from './routes/favoritos'
 import { Route as CategoriasRouteImport } from './routes/categorias'
 import { Route as IndexRouteImport } from './routes/index'
 
+const PerfilRoute = PerfilRouteImport.update({
+  id: '/perfil',
+  path: '/perfil',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const FavoritosRoute = FavoritosRouteImport.update({
   id: '/favoritos',
   path: '/favoritos',
@@ -33,34 +39,45 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/categorias': typeof CategoriasRoute
   '/favoritos': typeof FavoritosRoute
+  '/perfil': typeof PerfilRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/categorias': typeof CategoriasRoute
   '/favoritos': typeof FavoritosRoute
+  '/perfil': typeof PerfilRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/categorias': typeof CategoriasRoute
   '/favoritos': typeof FavoritosRoute
+  '/perfil': typeof PerfilRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/categorias' | '/favoritos'
+  fullPaths: '/' | '/categorias' | '/favoritos' | '/perfil'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/categorias' | '/favoritos'
-  id: '__root__' | '/' | '/categorias' | '/favoritos'
+  to: '/' | '/categorias' | '/favoritos' | '/perfil'
+  id: '__root__' | '/' | '/categorias' | '/favoritos' | '/perfil'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CategoriasRoute: typeof CategoriasRoute
   FavoritosRoute: typeof FavoritosRoute
+  PerfilRoute: typeof PerfilRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/perfil': {
+      id: '/perfil'
+      path: '/perfil'
+      fullPath: '/perfil'
+      preLoaderRoute: typeof PerfilRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/favoritos': {
       id: '/favoritos'
       path: '/favoritos'
@@ -89,6 +106,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CategoriasRoute: CategoriasRoute,
   FavoritosRoute: FavoritosRoute,
+  PerfilRoute: PerfilRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
