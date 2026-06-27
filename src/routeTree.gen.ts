@@ -13,6 +13,7 @@ import { Route as VipRouteImport } from './routes/vip'
 import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as FavoritosRouteImport } from './routes/favoritos'
 import { Route as CategoriasRouteImport } from './routes/categorias'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 
 const VipRoute = VipRouteImport.update({
@@ -35,6 +36,11 @@ const CategoriasRoute = CategoriasRouteImport.update({
   path: '/categorias',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -43,6 +49,7 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
   '/categorias': typeof CategoriasRoute
   '/favoritos': typeof FavoritosRoute
   '/perfil': typeof PerfilRoute
@@ -50,6 +57,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
   '/categorias': typeof CategoriasRoute
   '/favoritos': typeof FavoritosRoute
   '/perfil': typeof PerfilRoute
@@ -58,6 +66,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
   '/categorias': typeof CategoriasRoute
   '/favoritos': typeof FavoritosRoute
   '/perfil': typeof PerfilRoute
@@ -65,14 +74,22 @@ export interface FileRoutesById {
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/categorias' | '/favoritos' | '/perfil' | '/vip'
+  fullPaths: '/' | '/auth' | '/categorias' | '/favoritos' | '/perfil' | '/vip'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/categorias' | '/favoritos' | '/perfil' | '/vip'
-  id: '__root__' | '/' | '/categorias' | '/favoritos' | '/perfil' | '/vip'
+  to: '/' | '/auth' | '/categorias' | '/favoritos' | '/perfil' | '/vip'
+  id:
+    | '__root__'
+    | '/'
+    | '/auth'
+    | '/categorias'
+    | '/favoritos'
+    | '/perfil'
+    | '/vip'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthRoute: typeof AuthRoute
   CategoriasRoute: typeof CategoriasRoute
   FavoritosRoute: typeof FavoritosRoute
   PerfilRoute: typeof PerfilRoute
@@ -109,6 +126,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CategoriasRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -121,6 +145,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthRoute: AuthRoute,
   CategoriasRoute: CategoriasRoute,
   FavoritosRoute: FavoritosRoute,
   PerfilRoute: PerfilRoute,
