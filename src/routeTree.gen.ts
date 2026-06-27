@@ -9,11 +9,17 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as VipRouteImport } from './routes/vip'
 import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as FavoritosRouteImport } from './routes/favoritos'
 import { Route as CategoriasRouteImport } from './routes/categorias'
 import { Route as IndexRouteImport } from './routes/index'
 
+const VipRoute = VipRouteImport.update({
+  id: '/vip',
+  path: '/vip',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PerfilRoute = PerfilRouteImport.update({
   id: '/perfil',
   path: '/perfil',
@@ -40,12 +46,14 @@ export interface FileRoutesByFullPath {
   '/categorias': typeof CategoriasRoute
   '/favoritos': typeof FavoritosRoute
   '/perfil': typeof PerfilRoute
+  '/vip': typeof VipRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/categorias': typeof CategoriasRoute
   '/favoritos': typeof FavoritosRoute
   '/perfil': typeof PerfilRoute
+  '/vip': typeof VipRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -53,13 +61,14 @@ export interface FileRoutesById {
   '/categorias': typeof CategoriasRoute
   '/favoritos': typeof FavoritosRoute
   '/perfil': typeof PerfilRoute
+  '/vip': typeof VipRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/categorias' | '/favoritos' | '/perfil'
+  fullPaths: '/' | '/categorias' | '/favoritos' | '/perfil' | '/vip'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/categorias' | '/favoritos' | '/perfil'
-  id: '__root__' | '/' | '/categorias' | '/favoritos' | '/perfil'
+  to: '/' | '/categorias' | '/favoritos' | '/perfil' | '/vip'
+  id: '__root__' | '/' | '/categorias' | '/favoritos' | '/perfil' | '/vip'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -67,10 +76,18 @@ export interface RootRouteChildren {
   CategoriasRoute: typeof CategoriasRoute
   FavoritosRoute: typeof FavoritosRoute
   PerfilRoute: typeof PerfilRoute
+  VipRoute: typeof VipRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/vip': {
+      id: '/vip'
+      path: '/vip'
+      fullPath: '/vip'
+      preLoaderRoute: typeof VipRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/perfil': {
       id: '/perfil'
       path: '/perfil'
@@ -107,6 +124,7 @@ const rootRouteChildren: RootRouteChildren = {
   CategoriasRoute: CategoriasRoute,
   FavoritosRoute: FavoritosRoute,
   PerfilRoute: PerfilRoute,
+  VipRoute: VipRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
