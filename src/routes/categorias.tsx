@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import * as Icons from "lucide-react";
 import { ChevronLeft } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
@@ -10,6 +10,7 @@ import {
   PRODUCTS,
   type CategoryId,
   type Product,
+  useRecommendedProducts,
 } from "@/lib/products";
 
 export const Route = createFileRoute("/categorias")({
@@ -26,19 +27,35 @@ export const Route = createFileRoute("/categorias")({
   component: CategoriesPage,
 });
 
-function count(id: CategoryId) {
+function count(id: CategoryId, productsList: Product[]) {
   return id === "tudo"
-    ? PRODUCTS.length
-    : PRODUCTS.filter((p) => p.category === id).length;
+    ? productsList.length
+    : productsList.filter((p) => p.category === id).length;
 }
 
 function CategoriesPage() {
   const [selected, setSelected] = useState<CategoryId | null>(null);
   const [product, setProduct] = useState<Product | null>(null);
+  
+  const { data: dbProducts = [] } = useRecommendedProducts();
+  const activeProducts = dbProducts.length > 0 ? dbProducts : PRODUCTS;
 
   const list = selected
-    ? PRODUCTS.filter((p) => p.category === selected)
+    ? activeProducts.filter((p) => p.category === selected)
     : [];
+
+  const [col1, col2] = useMemo(() => {
+    const left: Product[] = [];
+    const right: Product[] = [];
+    list.forEach((p, idx) => {
+      if (idx % 2 === 0) {
+        left.push(p);
+      } else {
+        right.push(p);
+      }
+    });
+    return [left, right];
+  }, [list]);
   const selectedLabel = CATEGORIES.find((c) => c.id === selected)?.label;
 
   return (
@@ -85,7 +102,7 @@ function CategoriesPage() {
                       {cat.label}
                     </span>
                     <span className="block text-xs text-muted-foreground">
-                      {count(cat.id)} ofertas
+                      {count(cat.id, activeProducts)} ofertas
                     </span>
                   </span>
                 </button>
@@ -93,12 +110,31 @@ function CategoriesPage() {
             })}
           </div>
         ) : (
-          <div className="columns-2 gap-3 pt-1">
-            {list.map((p) => (
-              <div key={p.id} style={{ breakInside: "avoid" }}>
-                <ProductCard product={p} onOpen={setProduct} />
-              </div>
-            ))}
+          <div className="flex gap-3 items-start pt-4">
+            {/* Left Column */}
+            <div className="flex-1 flex flex-col gap-3">
+              {col1.map((p, i) => (
+                <ProductCard
+                  key={p.id}
+                  product={p}
+                  onOpen={setProduct}
+                  priority={i < 1}
+                  index={i * 2}
+                />
+              ))}
+            </div>
+            {/* Right Column (Staggered offset) */}
+            <div className="flex-1 flex flex-col gap-3 pt-8">
+              {col2.map((p, i) => (
+                <ProductCard
+                  key={p.id}
+                  product={p}
+                  onOpen={setProduct}
+                  priority={i < 1}
+                  index={i * 2 + 1}
+                />
+              ))}
+            </div>
           </div>
         )}
       </main>

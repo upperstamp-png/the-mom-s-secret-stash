@@ -8,7 +8,7 @@ interface CategoryChipsProps {
 
 export function CategoryChips({ active, onChange }: CategoryChipsProps) {
   return (
-    <div className="no-scrollbar flex gap-2 overflow-x-auto px-4 py-3">
+    <div className="no-scrollbar flex gap-1.5 overflow-x-auto px-4 py-2">
       {CATEGORIES.map((cat) => {
         const Icon = (Icons[cat.icon as keyof typeof Icons] ||
           Icons.Tag) as React.ComponentType<{
@@ -20,15 +20,15 @@ export function CategoryChips({ active, onChange }: CategoryChipsProps) {
           <button
             key={cat.id}
             onClick={() => onChange(cat.id)}
-            className={`flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 text-[13px] font-bold transition-all active:scale-95 ${
+            className={`flex shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-[11px] font-extrabold transition-all active:scale-95 duration-200 ${
               isActive
-                ? "bg-gradient-primary text-primary-foreground shadow-glow"
-                : "border border-border bg-card text-foreground"
+                ? "bg-primary text-white shadow-soft"
+                : "bg-muted/40 text-muted-foreground hover:bg-muted/70"
             }`}
           >
             <Icon
-              className="h-4 w-4"
-              strokeWidth={isActive ? 2.4 : 2}
+              className="h-3.5 w-3.5"
+              strokeWidth={isActive ? 2.5 : 2}
             />
             {cat.label}
           </button>

@@ -1,7 +1,9 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Mail, ArrowRight, Sparkles } from "lucide-react";
+import { toast } from "sonner";
 import { useProfile, useHydrated } from "@/lib/store";
+import { supabase } from "@/lib/supabase";
 import logo from "@/assets/logo.png";
 
 export const Route = createFileRoute("/auth")({
@@ -24,6 +26,7 @@ function AuthPage() {
   const [emailMode, setEmailMode] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (hydrated && profile.loggedIn) {
@@ -31,9 +34,62 @@ function AuthPage() {
     }
   }, [hydrated, profile.loggedIn, profile.onboarded, navigate]);
 
-  const finishLogin = (data: { name: string; email: string }) => {
+  const isPlaceholder = !import.meta.env.VITE_SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL.includes("placeholder");
+
+  const finishLoginMock = (data: { name: string; email: string }) => {
+    toast.info("Modo Demonstração: Efetuando login local (Supabase não configurado)");
     update({ loggedIn: true, name: data.name, email: data.email });
     navigate({ to: profile.onboarded ? "/" : "/onboarding", replace: true });
+  };
+
+  const handleOAuth = async (provider: "google" | "apple") => {
+    if (isPlaceholder) {
+      finishLoginMock({ name: "Mamãe " + provider, email: `${provider}@clube.app` });
+      return;
+    }
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: window.location.origin + "/onboarding",
+        },
+      });
+      if (error) throw error;
+    } catch (err: any) {
+      toast.error(err.message || `Erro ao autenticar com ${provider}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEmailAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim()) return;
+
+    if (isPlaceholder) {
+      finishLoginMock({ name: name.trim() || "Mamãe", email: email.trim() });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email: email.trim(),
+        options: {
+          emailRedirectTo: window.location.origin + "/onboarding",
+          data: {
+            name: name.trim() || "Mamãe",
+          },
+        },
+      });
+      if (error) throw error;
+      toast.success("Link mágico de login enviado! Verifique sua caixa de entrada ✉️");
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao solicitar login por email");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -67,38 +123,30 @@ function AuthPage() {
         {!emailMode ? (
           <>
             <button
-              onClick={() =>
-                finishLogin({ name: "Mamãe", email: "google@clube.app" })
-              }
-              className="flex w-full items-center justify-center gap-3 rounded-2xl bg-card py-4 text-[15px] font-bold text-foreground shadow-card active:scale-[0.98]"
+              onClick={() => handleOAuth("google")}
+              disabled={loading}
+              className="flex w-full items-center justify-center gap-3 rounded-2xl bg-card py-4 text-[15px] font-bold text-foreground shadow-card active:scale-[0.98] disabled:opacity-50"
             >
               <GoogleIcon /> Continuar com Google
             </button>
             <button
-              onClick={() =>
-                finishLogin({ name: "Mamãe", email: "apple@clube.app" })
-              }
-              className="flex w-full items-center justify-center gap-3 rounded-2xl bg-foreground py-4 text-[15px] font-bold text-background active:scale-[0.98]"
+              onClick={() => handleOAuth("apple")}
+              disabled={loading}
+              className="flex w-full items-center justify-center gap-3 rounded-2xl bg-foreground py-4 text-[15px] font-bold text-background active:scale-[0.98] disabled:opacity-50"
             >
               <AppleIcon /> Continuar com Apple
             </button>
             <button
               onClick={() => setEmailMode(true)}
-              className="flex w-full items-center justify-center gap-2 rounded-2xl border border-border bg-card py-4 text-[15px] font-bold text-foreground active:scale-[0.98]"
+              disabled={loading}
+              className="flex w-full items-center justify-center gap-2 rounded-2xl border border-border bg-card py-4 text-[15px] font-bold text-foreground active:scale-[0.98] disabled:opacity-50"
             >
               <Mail className="h-5 w-5 text-primary" /> Continuar com Email
             </button>
           </>
         ) : (
           <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (!email.trim()) return;
-              finishLogin({
-                name: name.trim() || "Mamãe",
-                email: email.trim(),
-              });
-            }}
+            onSubmit={handleEmailAuth}
             className="space-y-3 rounded-3xl bg-card p-4 shadow-card"
           >
             <input
@@ -117,9 +165,10 @@ function AuthPage() {
             />
             <button
               type="submit"
-              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-primary py-3.5 text-[15px] font-bold text-primary-foreground shadow-glow active:scale-[0.98]"
+              disabled={loading}
+              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-primary py-3.5 text-[15px] font-bold text-primary-foreground shadow-glow active:scale-[0.98] disabled:opacity-50"
             >
-              Entrar <ArrowRight className="h-4 w-4" />
+              {loading ? "Processando..." : "Entrar"} <ArrowRight className="h-4 w-4" />
             </button>
             <button
               type="button"

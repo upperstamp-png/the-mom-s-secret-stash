@@ -1,11 +1,11 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Heart, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { ProductCard } from "@/components/ProductCard";
 import { OfferModal } from "@/components/OfferModal";
-import { PRODUCTS, type Product } from "@/lib/products";
+import { PRODUCTS, type Product, useRecommendedProducts } from "@/lib/products";
 import { useFavorites } from "@/lib/store";
 
 export const Route = createFileRoute("/favoritos")({
@@ -26,9 +26,27 @@ function FavoritesPage() {
   const { favorites } = useFavorites();
   const [product, setProduct] = useState<Product | null>(null);
 
-  const saved = favorites
-    .map((id) => PRODUCTS.find((p) => p.id === id.split("-")[0]))
-    .filter((p): p is Product => Boolean(p));
+  const { data: dbProducts = [] } = useRecommendedProducts();
+  const activeProducts = dbProducts.length > 0 ? dbProducts : PRODUCTS;
+
+  const saved = useMemo(() => {
+    return favorites
+      .map((id) => activeProducts.find((p) => p.id === id.split("-")[0]))
+      .filter((p): p is Product => Boolean(p));
+  }, [favorites, activeProducts]);
+
+  const [col1, col2] = useMemo(() => {
+    const left: Product[] = [];
+    const right: Product[] = [];
+    saved.forEach((p, idx) => {
+      if (idx % 2 === 0) {
+        left.push(p);
+      } else {
+        right.push(p);
+      }
+    });
+    return [left, right];
+  }, [saved]);
 
   const share = async () => {
     const text = "Olha os achadinhos que separei no Clube Secreto! 🧡";
@@ -84,12 +102,31 @@ function FavoritesPage() {
             </button>
           </div>
         ) : (
-          <div className="columns-2 gap-3 pt-1">
-            {saved.map((p) => (
-              <div key={p.id} style={{ breakInside: "avoid" }}>
-                <ProductCard product={p} onOpen={setProduct} />
-              </div>
-            ))}
+          <div className="flex gap-3 items-start pt-4">
+            {/* Left Column */}
+            <div className="flex-1 flex flex-col gap-3">
+              {col1.map((p, i) => (
+                <ProductCard
+                  key={p.id}
+                  product={p}
+                  onOpen={setProduct}
+                  priority={i < 1}
+                  index={i * 2}
+                />
+              ))}
+            </div>
+            {/* Right Column (Staggered offset) */}
+            <div className="flex-1 flex flex-col gap-3 pt-8">
+              {col2.map((p, i) => (
+                <ProductCard
+                  key={p.id}
+                  product={p}
+                  onOpen={setProduct}
+                  priority={i < 1}
+                  index={i * 2 + 1}
+                />
+              ))}
+            </div>
           </div>
         )}
       </main>

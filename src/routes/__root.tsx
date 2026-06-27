@@ -9,6 +9,9 @@ import {
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 import { Toaster } from "sonner";
+import { supabase } from "../lib/supabase";
+import { useProfile } from "../lib/store";
+import { registerPushNotifications } from "../lib/push";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -152,6 +155,82 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const { update, reset } = useProfile();
+
+  useEffect(() => {
+    const syncSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          const userId = session.user.id;
+
+          // Fetch profile details
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("*")
+            .eq("id", userId)
+            .single();
+
+          // Fetch children
+          const { data: children } = await supabase
+            .from("children")
+            .select("*")
+            .eq("profile_id", userId);
+
+          // Fetch interests
+          const { data: interests } = await supabase
+            .from("interests")
+            .select("category_id")
+            .eq("profile_id", userId);
+
+          // Fetch favorites
+          const { data: favorites } = await supabase
+            .from("favorites")
+            .select("product_id")
+            .eq("profile_id", userId);
+
+          update({
+            loggedIn: true,
+            name: profile?.name || session.user.user_metadata?.name || "Mamãe",
+            email: session.user.email || profile?.email || "",
+            vip: profile?.vip || false,
+            onboarded: profile?.onboarded || false,
+            city: profile?.city || "",
+            state: profile?.state || "",
+            avatarUrl: profile?.avatar_url || session.user.user_metadata?.avatar_url || "",
+            children: children ? children.map((c: any) => ({ id: c.id, name: c.name, ageMonths: c.age_months })) : [],
+            interests: interests ? interests.map((i: any) => i.category_id) : [],
+          });
+
+          // Sync local storage favorites with database if needed
+          if (favorites && favorites.length > 0) {
+            const currentFavs = JSON.parse(localStorage.getItem("csa.favorites") || "[]");
+            const dbFavIds = favorites.map((f: any) => f.product_id);
+            const merged = Array.from(new Set([...currentFavs, ...dbFavIds]));
+            localStorage.setItem("csa.favorites", JSON.stringify(merged));
+          }
+
+          registerPushNotifications().catch(() => {});
+        }
+      } catch (err) {
+        console.error("Erro ao sincronizar sessão do Supabase:", err);
+      }
+    };
+
+    syncSession();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        syncSession();
+      } else {
+        reset();
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [update, reset]);
 
   return (
     <QueryClientProvider client={queryClient}>

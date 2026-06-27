@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Crown,
   ChevronLeft,
@@ -14,6 +14,7 @@ import {
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { useProfile } from "@/lib/store";
+import { supabase } from "@/lib/supabase";
 
 export const Route = createFileRoute("/vip")({
   head: () => ({
@@ -54,16 +55,53 @@ function VipPage() {
   const { profile, update } = useProfile();
   const [processing, setProcessing] = useState(false);
 
-  const subscribe = () => {
-    // Placeholder for Stripe / Mercado Pago checkout.
-    // After confirmed payment, the backend will unlock VIP and reveal the
-    // WhatsApp group link automatically.
-    setProcessing(true);
-    setTimeout(() => {
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const mockStatus = urlParams.get("mock_status");
+    const success = urlParams.get("success");
+
+    if (mockStatus === "success" || success === "true") {
       update({ vip: true });
+      toast.success("Pagamento confirmado! Bem-vinda ao Clube VIP 🧡");
+      navigate({ to: "/vip", replace: true });
+    }
+  }, [update, navigate]);
+
+  const subscribe = async () => {
+    if (!profile.loggedIn) {
+      toast.error("Por favor, faça login para assinar o Clube VIP");
+      navigate({ to: "/auth" });
+      return;
+    }
+
+    setProcessing(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const headers: HeadersInit = { "Content-Type": "application/json" };
+      if (session?.access_token) {
+        headers["Authorization"] = `Bearer ${session.access_token}`;
+      }
+
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ gateway: "stripe" }),
+      });
+
+      if (!res.ok) throw new Error("Erro ao criar sessão de pagamento");
+      const data = await res.json();
+
+      if (data.url) {
+        toast.success("Redirecionando para o pagamento... 💳");
+        window.location.href = data.url;
+      } else {
+        throw new Error("URL de checkout não recebida");
+      }
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "Erro ao processar assinatura");
       setProcessing(false);
-      toast.success("Bem-vinda ao Clube VIP! 🧡");
-    }, 1200);
+    }
   };
 
   if (profile.vip) {

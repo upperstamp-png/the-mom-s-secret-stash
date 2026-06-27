@@ -1,4 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useState, useEffect } from "react";
+import { AnimatePresence, motion } from "motion/react";
 import {
   Crown,
   Baby,
@@ -10,6 +12,7 @@ import {
   ChevronRight,
   Plus,
   Pencil,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
@@ -41,6 +44,19 @@ function ProfilePage() {
   const { profile, update, reset } = useProfile();
   const { favorites } = useFavorites();
 
+  const [editOpen, setEditOpen] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [newAvatar, setNewAvatar] = useState("");
+  const [newCity, setNewCity] = useState("");
+  const [newState, setNewState] = useState("");
+
+  useEffect(() => {
+    setNewName(profile.name || "");
+    setNewAvatar(profile.avatarUrl || "");
+    setNewCity(profile.city || "");
+    setNewState(profile.state || "");
+  }, [profile]);
+
   const interestLabels = profile.interests
     .map((id) => CATEGORIES.find((c) => c.id === id)?.label)
     .filter(Boolean);
@@ -48,6 +64,18 @@ function ProfilePage() {
   const logout = () => {
     reset();
     navigate({ to: "/auth", replace: true });
+  };
+
+  const handleSave = (e: React.FormEvent) => {
+    e.preventDefault();
+    update({
+      name: newName.trim(),
+      avatarUrl: newAvatar.trim(),
+      city: newCity.trim(),
+      state: newState.trim(),
+    });
+    setEditOpen(false);
+    toast.success("Perfil atualizado com sucesso! ✨");
   };
 
   return (
@@ -59,9 +87,17 @@ function ProfilePage() {
       <main className="space-y-5 px-4">
         {/* Identity */}
         <div className="flex items-center gap-4 rounded-3xl border border-border bg-card p-4 shadow-card">
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-primary text-2xl font-extrabold text-primary-foreground shadow-glow">
-            {(profile.name || "M").charAt(0).toUpperCase()}
-          </div>
+          {profile.avatarUrl ? (
+            <img
+              src={profile.avatarUrl}
+              alt=""
+              className="h-16 w-16 rounded-2xl object-cover shadow-float"
+            />
+          ) : (
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-primary text-2xl font-extrabold text-primary-foreground shadow-glow">
+              {(profile.name || "M").charAt(0).toUpperCase()}
+            </div>
+          )}
           <div className="min-w-0 flex-1">
             <p className="truncate text-lg font-extrabold text-foreground">
               {profile.name || "Mamãe"}
@@ -69,7 +105,19 @@ function ProfilePage() {
             <p className="truncate text-sm text-muted-foreground">
               {profile.email || "—"}
             </p>
+            {(profile.city || profile.state) && (
+              <p className="mt-0.5 truncate text-xs font-semibold text-primary">
+                📍 {profile.city} {profile.state ? `· ${profile.state}` : ""}
+              </p>
+            )}
           </div>
+          <button
+            onClick={() => setEditOpen(true)}
+            className="flex h-10 w-10 items-center justify-center rounded-2xl bg-accent text-accent-foreground shadow-soft active:scale-90"
+            aria-label="Editar Perfil"
+          >
+            <Pencil className="h-4.5 w-4.5" />
+          </button>
         </div>
 
         {/* VIP banner */}
@@ -220,6 +268,103 @@ function ProfilePage() {
           <LogOut className="h-4 w-4" /> Sair
         </button>
       </main>
+
+      {/* Edit Profile Modal */}
+      <AnimatePresence>
+        {editOpen && (
+          <motion.div
+            className="fixed inset-0 z-[70] flex items-end justify-center sm:items-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <div
+              className="absolute inset-0 bg-foreground/50 backdrop-blur-sm"
+              onClick={() => setEditOpen(false)}
+            />
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 32, stiffness: 320 }}
+              className="relative z-10 w-full max-w-md rounded-t-[28px] bg-card p-6 pb-[env(safe-area-inset-bottom)] sm:rounded-[28px]"
+            >
+              <div className="flex items-center justify-between pb-4">
+                <h2 className="text-lg font-extrabold text-foreground">
+                  Editar Cadastro
+                </h2>
+                <button
+                  onClick={() => setEditOpen(false)}
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-accent text-foreground"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              <form onSubmit={handleSave} className="space-y-4">
+                <div>
+                  <label className="text-xs font-bold text-muted-foreground">
+                    Nome Completo
+                  </label>
+                  <input
+                    value={newName}
+                    onChange={(e) => setNewName(e.target.value)}
+                    required
+                    placeholder="Seu nome"
+                    className="mt-1 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm font-medium outline-none focus:border-primary"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-muted-foreground">
+                    URL da Foto (Avatar)
+                  </label>
+                  <input
+                    value={newAvatar}
+                    onChange={(e) => setNewAvatar(e.target.value)}
+                    placeholder="https://exemplo.com/foto.jpg"
+                    className="mt-1 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm font-medium outline-none focus:border-primary"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-bold text-muted-foreground">
+                      Cidade
+                    </label>
+                    <input
+                      value={newCity}
+                      onChange={(e) => setNewCity(e.target.value)}
+                      placeholder="Ex: São Paulo"
+                      className="mt-1 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm font-medium outline-none focus:border-primary"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-muted-foreground">
+                      Estado
+                    </label>
+                    <input
+                      value={newState}
+                      onChange={(e) => setNewState(e.target.value)}
+                      placeholder="Ex: SP"
+                      maxLength={2}
+                      className="mt-1 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm font-medium outline-none focus:border-primary"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-primary py-3.5 text-base font-bold text-primary-foreground shadow-glow active:scale-[0.98]"
+                >
+                  Salvar Alterações
+                </button>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </AppShell>
   );
 }
+

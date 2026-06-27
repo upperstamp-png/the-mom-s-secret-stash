@@ -1,4 +1,4 @@
-import { Heart, Flame, Lock } from "lucide-react";
+import { Heart } from "lucide-react";
 import { motion } from "motion/react";
 import {
   type Product,
@@ -11,95 +11,121 @@ interface ProductCardProps {
   product: Product;
   onOpen: (p: Product) => void;
   priority?: boolean;
+  index?: number;
 }
 
-export function ProductCard({ product, onOpen, priority }: ProductCardProps) {
+export function ProductCard({ product, onOpen, priority, index = 0 }: ProductCardProps) {
   const { isFavorite, toggle } = useFavorites();
   const fav = isFavorite(product.id);
   const saving = savingsPercent(product);
 
+  // Strictly 9:16 vertical aspect ratio for all cards
+  const aspectClass = "aspect-[9/16]";
+
   return (
     <motion.button
       layout
-      whileTap={{ scale: 0.97 }}
+      whileTap={{ scale: 0.98 }}
       onClick={() => {
         trackEvent({ productId: product.id, type: "view" });
         onOpen(product);
       }}
-      className="group relative mb-3 block w-full overflow-hidden rounded-3xl bg-card text-left shadow-card"
+      className="group relative mb-3 block w-full overflow-hidden rounded-[24px] bg-card text-left border border-border/5 shadow-none"
     >
-      <div className="relative aspect-[9/16] w-full overflow-hidden bg-muted">
-        <img
-          src={product.image}
-          alt={product.title}
-          loading={priority ? "eager" : "lazy"}
-          width={768}
-          height={1344}
-          className="h-full w-full object-cover transition-transform duration-500 group-active:scale-105"
+      <div className={`relative ${aspectClass} w-full overflow-hidden`}>
+        {/* Video / Image Render */}
+        {product.video ? (
+          <video
+            src={product.video}
+            autoPlay
+            muted
+            loop
+            playsInline
+            className="h-full w-full object-cover transition-transform duration-500 group-active:scale-[1.01]"
+          />
+        ) : (
+          <img
+            src={product.image}
+            alt={product.title}
+            loading={priority ? "eager" : "lazy"}
+            width={768}
+            height={1344}
+            className="h-full w-full object-cover transition-transform duration-500 group-active:scale-[1.01]"
+          />
+        )}
+
+        {/* Gradient Overlay for Text Readability (Transparent to 70% Black) */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background:
+              "linear-gradient(180deg, transparent 45%, rgba(0,0,0,0.7) 100%)",
+          }}
         />
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/5" />
 
-        {/* top badges */}
-        <div className="absolute inset-x-2.5 top-2.5 flex items-start justify-between gap-2">
-          <div className="flex flex-wrap gap-1.5">
-            <span className="rounded-full bg-primary px-2.5 py-1 text-[11px] font-extrabold text-primary-foreground shadow-glow">
-              -{saving}%
+        {/* Top Badges (Left) */}
+        <div className="absolute left-2.5 top-2.5 flex flex-wrap gap-1 max-w-[70%]">
+          <span className="rounded-full bg-primary px-2 py-0.5 text-[9px] font-extrabold text-primary-foreground shadow-sm">
+            -{saving}%
+          </span>
+          {product.hot && (
+            <span className="rounded-full bg-black/40 px-2 py-0.5 text-[9px] font-bold text-secondary backdrop-blur-md border border-white/5">
+              🔥 Oferta
             </span>
-            {product.hot && (
-              <span className="flex items-center gap-1 rounded-full bg-card/90 px-2 py-1 text-[11px] font-bold text-primary backdrop-blur">
-                <Flame className="h-3 w-3" /> Em alta
-              </span>
-            )}
-            {product.vipOnly && (
-              <span className="flex items-center gap-1 rounded-full bg-foreground/85 px-2 py-1 text-[11px] font-bold text-background backdrop-blur">
-                <Lock className="h-3 w-3" /> VIP
-              </span>
-            )}
-          </div>
-          <span
-            role="button"
-            tabIndex={0}
-            aria-label={fav ? "Remover dos favoritos" : "Adicionar aos favoritos"}
-            onClick={(e) => {
-              e.stopPropagation();
-              toggle(product.id);
-              trackEvent({ productId: product.id, type: "favorite" });
-            }}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-card/90 backdrop-blur transition-transform active:scale-90"
-          >
-            <Heart
-              className={`h-[18px] w-[18px] transition-colors ${
-                fav ? "fill-primary text-primary" : "text-foreground"
-              }`}
-            />
-          </span>
+          )}
+          {product.vipOnly && (
+            <span className="rounded-full bg-amber-500 px-2 py-0.5 text-[9px] font-extrabold text-white shadow-sm">
+              ⭐ VIP
+            </span>
+          )}
         </div>
 
-        {/* bottom text on image */}
-        <div className="absolute inset-x-0 bottom-0 p-3">
-          <p className="line-clamp-2 text-[13px] font-semibold leading-snug text-white drop-shadow">
-            {product.title}
+        {/* Translucent Favoritar button with custom bounce animation on click (Right) */}
+        <motion.button
+          whileTap={{ scale: 1.35 }}
+          transition={{ type: "spring", stiffness: 400, damping: 11 }}
+          role="button"
+          aria-label={fav ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+          onClick={(e) => {
+            e.stopPropagation();
+            toggle(product.id);
+            trackEvent({ productId: product.id, type: "favorite" });
+          }}
+          className="absolute right-2.5 top-2.5 flex h-8.5 w-8.5 items-center justify-center rounded-full bg-white/25 backdrop-blur-md border border-white/10 shadow-soft transition-all"
+        >
+          <Heart
+            className={`h-4.5 w-4.5 transition-colors ${
+              fav ? "fill-primary text-primary" : "text-white"
+            }`}
+          />
+        </motion.button>
+
+        {/* Bottom Content Container */}
+        <div className="absolute inset-x-3 bottom-3 flex flex-col justify-end">
+          {/* Brand and Marketplace */}
+          <p className="text-[10px] font-bold text-white/70 leading-none truncate">
+            {product.brand} · <span className="text-secondary">{product.marketplace}</span>
           </p>
-        </div>
-      </div>
 
-      <div className="p-3">
-        <div className="flex items-end justify-between gap-2">
-          <div>
-            <p className="text-[17px] font-extrabold leading-none text-foreground">
+          {/* Product Title */}
+          <h3 className="line-clamp-2 text-xs font-bold leading-tight text-white mt-1">
+            {product.title}
+          </h3>
+
+          {/* Prices */}
+          <div className="mt-1 flex items-baseline gap-1.5">
+            <span className="text-[16px] font-black text-white leading-none">
               {formatBRL(product.price)}
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground line-through">
+            </span>
+            <span className="text-[10px] text-white/45 line-through leading-none">
               {formatBRL(product.oldPrice)}
-            </p>
+            </span>
           </div>
-          <span className="rounded-full bg-accent px-2 py-1 text-[11px] font-bold text-accent-foreground">
-            {product.marketplace}
-          </span>
-        </div>
 
-        <div className="mt-3 w-full rounded-2xl bg-gradient-primary py-2.5 text-center text-sm font-bold text-primary-foreground shadow-glow">
-          Ver Oferta
+          {/* Overlaid Floating Button: Pill Rounded (999px), Slightly Transparent Orange, Soft Shadow */}
+          <div className="mt-2.5 w-full rounded-full bg-primary/90 text-center text-xs font-black text-primary-foreground py-2.5 shadow-sm active:scale-95 transition-transform">
+            VER OFERTA
+          </div>
         </div>
       </div>
     </motion.button>

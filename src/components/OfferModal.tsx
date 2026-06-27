@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { useNavigate } from "@tanstack/react-router";
-import { X, Heart, Copy, Check, ExternalLink, Lock, Tag } from "lucide-react";
+import { X, Heart, ExternalLink, Lock, Tag } from "lucide-react";
 import { toast } from "sonner";
 import {
   type Product,
@@ -40,7 +40,6 @@ export function OfferModal({ product, onClose }: OfferModalProps) {
   const openOffer = (p: Product) => {
     trackEvent({ productId: p.id, type: "offer_click" });
     toast.success("Abrindo oferta no " + p.marketplace + " ✨");
-    // Affiliate redirect placeholder — wired to real affiliate links later.
     onClose();
   };
 
@@ -48,136 +47,178 @@ export function OfferModal({ product, onClose }: OfferModalProps) {
     <AnimatePresence>
       {product && (
         <motion.div
-          className="fixed inset-0 z-[70] flex items-end justify-center sm:items-center"
+          className="fixed inset-0 z-[70] flex items-center justify-center bg-black/80 backdrop-blur-sm"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
         >
+          {/* Close Backdrop click */}
           <div
-            className="absolute inset-0 bg-foreground/50 backdrop-blur-sm"
+            className="absolute inset-0"
             onClick={onClose}
           />
-          <motion.div
-            initial={{ y: "100%" }}
-            animate={{ y: 0 }}
-            exit={{ y: "100%" }}
-            transition={{ type: "spring", damping: 32, stiffness: 320 }}
-            className="relative z-10 max-h-[92vh] w-full max-w-md overflow-y-auto rounded-t-[28px] bg-card pb-[env(safe-area-inset-bottom)] sm:rounded-[28px]"
-          >
-            <div className="sticky top-0 z-20 flex justify-center pt-2.5">
-              <span className="h-1.5 w-12 rounded-full bg-border" />
-            </div>
 
-            <div className="relative">
-              <div className="relative mx-auto mt-2 aspect-[9/16] max-h-[52vh] w-[calc(100%-2rem)] overflow-hidden rounded-3xl bg-muted">
+          {/* Swipeable Story Container */}
+          <motion.div
+            drag="y"
+            dragConstraints={{ top: 0 }}
+            dragElastic={{ bottom: 0.8 }}
+            onDragEnd={(e, info) => {
+              if (info.offset.y > 140) {
+                onClose();
+              }
+            }}
+            initial={{ y: "100%", scale: 0.96 }}
+            animate={{ y: 0, scale: 1 }}
+            exit={{ y: "100%", scale: 0.96 }}
+            transition={{ type: "spring", damping: 26, stiffness: 240 }}
+            className="relative z-10 h-full max-h-[94vh] w-full max-w-md overflow-hidden rounded-[32px] bg-black text-white shadow-2xl active:cursor-grabbing"
+          >
+            {/* Story Background Hero */}
+            <div className="absolute inset-0 w-full h-full pointer-events-none select-none z-0">
+              {product.video ? (
+                <video
+                  src={product.video}
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  className="h-full w-full object-cover"
+                />
+              ) : (
                 <img
                   src={product.image}
                   alt={product.title}
                   className="h-full w-full object-cover"
                 />
-                <div className="absolute left-3 top-3 rounded-full bg-primary px-3 py-1.5 text-sm font-extrabold text-primary-foreground shadow-glow">
+              )}
+            </div>
+
+            {/* Gradient Overlay for story text readability */}
+            <div
+              className="absolute inset-0 z-10 pointer-events-none"
+              style={{
+                background:
+                  "linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, transparent 40%, rgba(0,0,0,0.9) 85%)",
+              }}
+            />
+
+            {/* Drag Bar Indicator */}
+            <div className="absolute top-3 inset-x-0 z-30 flex flex-col items-center pointer-events-none">
+              <span className="h-1.5 w-10 rounded-full bg-white/30" />
+              <span className="text-[8px] font-bold text-white/40 mt-1 uppercase tracking-widest leading-none">
+                Deslize para fechar
+              </span>
+            </div>
+
+            {/* Floating Top Nav (Controls) */}
+            <div className="absolute inset-x-4 top-10 z-30 flex justify-between items-center">
+              <button
+                onClick={onClose}
+                aria-label="Fechar"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-white/20 backdrop-blur-md border border-white/10 active:scale-90 transition-transform cursor-pointer"
+              >
+                <X className="h-5 w-5 text-white" />
+              </button>
+
+              <div className="flex gap-2">
+                <span className="rounded-full bg-primary px-3 py-1 text-[11px] font-black text-white shadow-glow">
                   -{savingsPercent(product)}%
-                </div>
-                <button
-                  onClick={onClose}
-                  aria-label="Fechar"
-                  className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-card/90 backdrop-blur active:scale-90"
-                >
-                  <X className="h-5 w-5 text-foreground" />
-                </button>
+                </span>
                 <button
                   onClick={() => toggle(product.id)}
                   aria-label="Favoritar"
-                  className="absolute bottom-3 right-3 flex h-11 w-11 items-center justify-center rounded-full bg-card/90 backdrop-blur active:scale-90"
+                  className="flex h-9 w-9 items-center justify-center rounded-full bg-white/20 backdrop-blur-md border border-white/10 active:scale-90 transition-transform cursor-pointer"
                 >
                   <Heart
-                    className={`h-5 w-5 ${
+                    className={`h-4.5 w-4.5 ${
                       isFavorite(product.id)
                         ? "fill-primary text-primary"
-                        : "text-foreground"
+                        : "text-white"
                     }`}
                   />
                 </button>
               </div>
             </div>
 
-            <div className="px-5 pt-4">
-              <div className="flex items-center gap-2">
-                <span className="rounded-full bg-accent px-2.5 py-1 text-[11px] font-bold text-accent-foreground">
+            {/* Bottom Content Area */}
+            <div className="absolute inset-x-5 bottom-8 z-20 flex flex-col gap-3">
+              {/* Brand and Marketplace */}
+              <div className="flex items-center gap-1.5">
+                <span className="rounded-full bg-secondary px-2.5 py-0.5 text-[9px] font-extrabold text-foreground shadow-sm">
                   {product.marketplace}
                 </span>
-                <span className="text-xs font-medium text-muted-foreground">
-                  {product.brand}
-                </span>
+                {product.brand && (
+                  <span className="text-[10px] font-extrabold text-white/80 uppercase tracking-wider">
+                    {product.brand}
+                  </span>
+                )}
               </div>
 
-              <h2 className="mt-2.5 text-lg font-extrabold leading-snug text-foreground">
+              {/* Product Title */}
+              <h2 className="text-base font-extrabold leading-tight text-white">
                 {product.title}
               </h2>
 
-              <div className="mt-3 flex items-end gap-3">
-                <span className="text-3xl font-extrabold text-foreground">
+              {/* Prices */}
+              <div className="flex items-baseline gap-2.5">
+                <span className="text-3xl font-black text-white">
                   {formatBRL(product.price)}
                 </span>
-                <span className="pb-1 text-sm text-muted-foreground line-through">
+                <span className="text-sm text-white/50 line-through">
                   {formatBRL(product.oldPrice)}
                 </span>
-                <span className="mb-1 ml-auto rounded-full bg-success/15 px-2.5 py-1 text-xs font-bold text-success">
+                <span className="rounded-full bg-success/15 px-2.5 py-0.5 text-xs font-bold text-success">
                   Economize {formatBRL(product.oldPrice - product.price)}
                 </span>
               </div>
 
-              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-                {product.description}
-              </p>
+              {/* Description */}
+              {product.description && (
+                <p className="text-xs leading-relaxed text-white/70 line-clamp-2">
+                  {product.description}
+                </p>
+              )}
 
+              {/* Coupon Option */}
               {product.coupon && (
                 <button
                   onClick={copyCoupon}
-                  className="mt-4 flex w-full items-center gap-3 rounded-2xl border border-dashed border-primary/50 bg-accent/60 p-3 text-left active:scale-[0.99]"
+                  className="flex w-full items-center gap-3 rounded-2xl border border-dashed border-white/20 bg-white/10 p-2.5 text-left active:scale-[0.98] transition-transform"
                 >
-                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/15">
-                    <Tag className="h-4 w-4 text-primary" />
-                  </span>
-                  <span className="flex-1">
-                    <span className="block text-[11px] font-medium text-muted-foreground">
-                      Cupom exclusivo
+                  <Tag className="h-4 w-4 text-secondary" />
+                  <div className="flex-grow">
+                    <span className="block text-[8px] font-bold text-white/50 uppercase leading-none">
+                      Cupom Disponível
                     </span>
-                    <span className="block text-base font-extrabold tracking-wide text-foreground">
+                    <span className="block text-sm font-extrabold tracking-wide text-white leading-none mt-1">
                       {product.coupon}
                     </span>
-                  </span>
-                  <span className="flex items-center gap-1 text-xs font-bold text-primary">
-                    {copied ? (
-                      <>
-                        <Check className="h-4 w-4" /> Copiado
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="h-4 w-4" /> Copiar
-                      </>
-                    )}
+                  </div>
+                  <span className="text-xs font-bold text-secondary mr-1">
+                    {copied ? "Copiado!" : "Copiar"}
                   </span>
                 </button>
               )}
-            </div>
 
-            <div className="sticky bottom-0 mt-5 space-y-2.5 border-t border-border bg-card/95 p-4 backdrop-blur">
-              <button
-                onClick={() => openOffer(product)}
-                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-primary py-3.5 text-base font-bold text-primary-foreground shadow-glow active:scale-[0.98]"
-              >
-                <ExternalLink className="h-5 w-5" /> Ver Oferta
-              </button>
-              <button
-                onClick={() => {
-                  onClose();
-                  navigate({ to: "/vip" });
-                }}
-                className="flex w-full items-center justify-center gap-2 rounded-2xl border border-border bg-card py-3 text-sm font-bold text-foreground active:scale-[0.98]"
-              >
-                <Lock className="h-4 w-4 text-primary" /> Entrar para o Clube VIP
-              </button>
+              {/* CTA Buttons */}
+              <div className="pt-1.5 space-y-2">
+                <button
+                  onClick={() => openOffer(product)}
+                  className="flex w-full items-center justify-center gap-2 rounded-full bg-primary/95 hover:bg-primary py-3.5 text-sm font-black text-white shadow-glow active:scale-[0.98] transition-transform cursor-pointer"
+                >
+                  <ExternalLink className="h-4.5 w-4.5" /> VER OFERTA
+                </button>
+                <button
+                  onClick={() => {
+                    onClose();
+                    navigate({ to: "/vip" });
+                  }}
+                  className="flex w-full items-center justify-center gap-2 rounded-full bg-white/10 hover:bg-white/15 py-3 text-xs font-black text-white backdrop-blur-sm border border-white/10 active:scale-[0.98] transition-transform cursor-pointer"
+                >
+                  <Lock className="h-3.5 w-3.5 text-secondary" /> ENTRAR NO CLUBE VIP
+                </button>
+              </div>
             </div>
           </motion.div>
         </motion.div>

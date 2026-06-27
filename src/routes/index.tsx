@@ -10,6 +10,7 @@ import {
   PRODUCTS,
   type Product,
   type CategoryId,
+  useRecommendedProducts,
 } from "@/lib/products";
 import { useProfile } from "@/lib/store";
 import logo from "@/assets/logo.png";
@@ -45,19 +46,16 @@ function HomePage() {
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<Product | null>(null);
   const [count, setCount] = useState(PAGE);
-  const [loading, setLoading] = useState(true);
   const sentinel = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const t = setTimeout(() => setLoading(false), 600);
-    return () => clearTimeout(t);
-  }, []);
+  const { data: dbProducts = [], isLoading: loading } = useRecommendedProducts();
 
   const filtered = useMemo(() => {
+    const list = dbProducts.length > 0 ? dbProducts : PRODUCTS;
     const base =
       active === "tudo"
-        ? PRODUCTS
-        : PRODUCTS.filter((p) => p.category === active);
+        ? list
+        : list.filter((p) => p.category === active);
     const q = query.trim().toLowerCase();
     const byQuery = q
       ? base.filter(
@@ -73,7 +71,20 @@ function HomePage() {
       if (item) out.push({ ...item, id: `${item.id}-${i}` });
     }
     return out;
-  }, [active, query, count]);
+  }, [dbProducts, active, query, count]);
+
+  const [col1, col2] = useMemo(() => {
+    const left: Product[] = [];
+    const right: Product[] = [];
+    filtered.forEach((p, idx) => {
+      if (idx % 2 === 0) {
+        left.push(p);
+      } else {
+        right.push(p);
+      }
+    });
+    return [left, right];
+  }, [filtered]);
 
   useEffect(() => {
     setCount(PAGE);
@@ -96,69 +107,71 @@ function HomePage() {
 
   return (
     <AppShell>
-      {/* Header */}
-      <header className="sticky top-0 z-40 bg-background/85 px-4 pb-3 pt-4 backdrop-blur-xl">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <img
-              src={logo}
-              alt=""
-              width={40}
-              height={40}
-              className="h-10 w-10 rounded-2xl"
-            />
-            <div className="leading-tight">
-              <p className="text-[11px] font-medium text-muted-foreground">
-                Oi, {firstName} 🧡
-              </p>
-              <p className="text-[15px] font-extrabold text-foreground">
-                Achadinhos de hoje
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => navigate({ to: "/vip" })}
-              aria-label="Clube VIP"
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-vip text-secondary shadow-soft active:scale-90"
-            >
-              <Crown className="h-[18px] w-[18px]" />
-            </button>
-            <button
-              aria-label="Notificações"
-              className="relative flex h-10 w-10 items-center justify-center rounded-full bg-card shadow-soft active:scale-90"
-            >
-              <Bell className="h-[18px] w-[18px] text-foreground" />
-              <span className="absolute right-2.5 top-2.5 h-2 w-2 rounded-full bg-primary" />
-            </button>
-          </div>
-        </div>
-
-        {/* Search */}
-        <div className="mt-3 flex items-center gap-2 rounded-2xl border border-border bg-card px-4 py-3 shadow-soft">
-          <Search className="h-5 w-5 text-muted-foreground" />
+      {/* Sticky Premium Header */}
+      <header className="sticky top-0 z-40 bg-background/60 px-4 py-2.5 backdrop-blur-xl border-b border-border/5 flex items-center gap-2">
+        <div className="flex-1 flex items-center gap-2 rounded-full bg-muted/50 px-4 py-2 hover:bg-muted/75 transition-colors">
+          <Search className="h-4 w-4 text-muted-foreground shrink-0" />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="O que você procura hoje?"
-            className="w-full bg-transparent text-sm font-medium text-foreground outline-none placeholder:text-muted-foreground"
+            placeholder="Buscar no clube..."
+            className="w-full bg-transparent text-xs font-semibold text-foreground outline-none placeholder:text-muted-foreground"
           />
         </div>
+        <button
+          onClick={() => navigate({ to: "/vip" })}
+          aria-label="Clube VIP"
+          className="flex h-8.5 w-8.5 shrink-0 items-center justify-center rounded-full bg-amber-500/10 text-amber-500 active:scale-90 transition-all"
+        >
+          <Crown className="h-4.5 w-4.5" />
+        </button>
+        <button
+          aria-label="Notificações"
+          className="relative flex h-8.5 w-8.5 shrink-0 items-center justify-center rounded-full bg-muted/65 text-foreground active:scale-90 transition-all"
+        >
+          <Bell className="h-4.5 w-4.5 text-foreground" />
+          <span className="absolute right-2.5 top-2.5 h-1.5 w-1.5 rounded-full bg-primary" />
+        </button>
       </header>
 
       <CategoryChips active={active} onChange={setActive} />
 
       {/* Feed */}
-      <main className="px-4 pt-1">
+      <main className="px-4 pt-4">
         {loading ? (
-          <div className="columns-2 gap-3">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div
-                key={i}
-                className="skeleton mb-3 aspect-[9/16] w-full rounded-3xl"
-                style={{ breakInside: "avoid" }}
-              />
-            ))}
+          <div className="flex gap-3 items-start">
+            <div className="flex-1 flex flex-col gap-3">
+              {[0, 2, 4].map((i) => {
+                const aspect =
+                  i % 3 === 0
+                    ? "aspect-[9/16]"
+                    : i % 3 === 1
+                      ? "aspect-[9/14.5]"
+                      : "aspect-[9/18]";
+                return (
+                  <div
+                    key={i}
+                    className={`skeleton w-full ${aspect} rounded-[24px]`}
+                  />
+                );
+              })}
+            </div>
+            <div className="flex-1 flex flex-col gap-3 pt-8">
+              {[1, 3, 5].map((i) => {
+                const aspect =
+                  i % 3 === 0
+                    ? "aspect-[9/16]"
+                    : i % 3 === 1
+                      ? "aspect-[9/14.5]"
+                      : "aspect-[9/18]";
+                return (
+                  <div
+                    key={i}
+                    className={`skeleton w-full ${aspect} rounded-[24px]`}
+                  />
+                );
+              })}
+            </div>
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-center">
@@ -169,16 +182,31 @@ function HomePage() {
             </p>
           </div>
         ) : (
-          <div className="columns-2 gap-3">
-            {filtered.map((p, i) => (
-              <div key={p.id} style={{ breakInside: "avoid" }}>
+          <div className="flex gap-3 items-start">
+            {/* Left Column */}
+            <div className="flex-1 flex flex-col gap-3">
+              {col1.map((p, i) => (
                 <ProductCard
+                  key={p.id}
                   product={p}
                   onOpen={setSelected}
-                  priority={i < 2}
+                  priority={i < 1}
+                  index={i * 2}
                 />
-              </div>
-            ))}
+              ))}
+            </div>
+            {/* Right Column (Staggered offset) */}
+            <div className="flex-1 flex flex-col gap-3 pt-8">
+              {col2.map((p, i) => (
+                <ProductCard
+                  key={p.id}
+                  product={p}
+                  onOpen={setSelected}
+                  priority={i < 1}
+                  index={i * 2 + 1}
+                />
+              ))}
+            </div>
           </div>
         )}
         <div ref={sentinel} className="h-10" />

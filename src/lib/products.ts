@@ -4,6 +4,8 @@ import toys from "@/assets/p-toys.jpg";
 import stroller from "@/assets/p-stroller.jpg";
 import bottles from "@/assets/p-bottles.jpg";
 import shoes from "@/assets/p-shoes.jpg";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "./supabase";
 
 export type CategoryId =
   | "fraldas"
@@ -38,6 +40,7 @@ export interface Product {
   id: string;
   title: string;
   image: string;
+  video?: string;
   price: number;
   oldPrice: number;
   marketplace: string;
@@ -217,5 +220,89 @@ export function savingsPercent(p: Product): number {
 }
 
 export function getProductById(id: string): Product | undefined {
-  return PRODUCTS.find((p) => p.id === id);
+  const cleanId = id.split("-")[0];
+  return PRODUCTS.find((p) => p.id === cleanId);
+}
+
+export function useRecommendedProducts() {
+  return useQuery({
+    queryKey: ["products", "recommended"],
+    queryFn: async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const headers: HeadersInit = {};
+        if (session?.access_token) {
+          headers["Authorization"] = `Bearer ${session.access_token}`;
+        }
+        const res = await fetch("/api/recommendations", { headers });
+        if (!res.ok) throw new Error("Failed to fetch recommended products");
+        const data = await res.json();
+        return data.products as Product[];
+      } catch (err) {
+        console.error("Erro ao carregar produtos recomendados:", err);
+        // Fallback to static mock PRODUCTS if database fetch fails
+        return PRODUCTS;
+      }
+    },
+  });
+}
+
+export function useProduct(id: string) {
+  const cleanId = id.split("-")[0];
+  const isUuid = cleanId.match(/^[0-9a-fA-F-]{36}$/) !== null;
+
+  return useQuery({
+    queryKey: ["product", cleanId],
+    queryFn: async () => {
+      if (!isUuid) {
+        // Fallback to mock product if the ID is not a UUID
+        const mockProduct = getProductById(cleanId);
+        if (mockProduct) return mockProduct;
+        throw new Error("Product not found");
+      }
+
+      const { data, error } = await supabase
+        .from("products")
+        .select(`
+          id,
+          title,
+          description,
+          image_url,
+          video_url,
+          price,
+          old_price,
+          marketplace,
+          category_id,
+          brand,
+          coupon_id,
+          cashback,
+          affiliate_link,
+          vip_only,
+          hot,
+          slug,
+          coupons (code)
+        `)
+        .eq("id", cleanId)
+        .single();
+
+      if (error || !data) throw new Error("Product not found in database");
+
+      return {
+        id: data.id,
+        title: data.title,
+        description: data.description || "",
+        image: data.image_url,
+        video: data.video_url || undefined,
+        price: Number(data.price),
+        oldPrice: Number(data.old_price),
+        marketplace: data.marketplace,
+        brand: data.brand || "",
+        category: data.category_id as CategoryId,
+        coupon: data.coupons?.code || undefined,
+        vipOnly: data.vip_only,
+        hot: data.hot,
+      } as Product;
+    },
+    enabled: !!cleanId,
+  });
 }
