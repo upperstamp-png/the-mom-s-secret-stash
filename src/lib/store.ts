@@ -40,18 +40,30 @@ function write<T>(key: string, value: T) {
   emit();
 }
 
+// Cache parsed snapshots so getSnapshot returns a stable reference while the
+// underlying raw string is unchanged. Without this, JSON.parse creates a new
+// object every render and useSyncExternalStore loops infinitely.
+const snapshotCache = new Map<string, { raw: string | null; value: unknown }>();
+
 function usePersistentValue<T>(key: string, fallback: T): T {
   return useSyncExternalStore(
     subscribe,
     () => {
       const raw =
         typeof window !== "undefined" ? window.localStorage.getItem(key) : null;
-      if (!raw) return fallback;
-      try {
-        return JSON.parse(raw) as T;
-      } catch {
-        return fallback;
+      const cached = snapshotCache.get(key);
+      if (cached && cached.raw === raw) return cached.value as T;
+
+      let value: T = fallback;
+      if (raw) {
+        try {
+          value = JSON.parse(raw) as T;
+        } catch {
+          value = fallback;
+        }
       }
+      snapshotCache.set(key, { raw, value });
+      return value;
     },
     () => fallback,
   );
