@@ -4,6 +4,34 @@
 -- Enable UUID extension
 create extension if not exists "uuid-ossp";
 
+-- Drop existing tables to ensure a clean slate in case of partial runs
+drop table if exists public.children cascade;
+drop table if exists public.profiles cascade;
+drop table if exists public.categories cascade;
+drop table if exists public.interests cascade;
+drop table if exists public.coupons cascade;
+drop table if exists public.products cascade;
+drop table if exists public.offers cascade;
+drop table if exists public.affiliate_links cascade;
+drop table if exists public.favorites cascade;
+drop table if exists public.recently_viewed cascade;
+drop table if exists public.push_tokens cascade;
+drop table if exists public.notifications cascade;
+drop table if exists public.payments cascade;
+drop table if exists public.orders cascade;
+drop table if exists public.vip_members cascade;
+drop table if exists public.analytics_events cascade;
+drop table if exists public.clicks cascade;
+drop table if exists public.conversions cascade;
+drop table if exists public.settings cascade;
+drop table if exists public.admin_users cascade;
+drop table if exists public.crawler_jobs cascade;
+drop table if exists public.price_history cascade;
+drop table if exists public.instagram_posts cascade;
+drop table if exists public.whatsapp_campaigns cascade;
+drop trigger if exists on_auth_user_created on auth.users;
+
+
 -- 1. Users / Profiles table (extends auth.users)
 create table public.profiles (
     id uuid references auth.users on delete cascade primary key,

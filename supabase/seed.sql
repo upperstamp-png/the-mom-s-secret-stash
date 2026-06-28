@@ -32,7 +32,7 @@ insert into public.products (
     id, title, description, image_url, price, old_price, marketplace, category_id, brand, coupon_id, vip_only, hot, slug, affiliate_link
 ) values
 (
-    'p0000000-0000-0000-0000-000000000001',
+    'f0000000-0000-0000-0000-000000000001',
     'Fralda Premium Toque Macio — Pacote Mega',
     'Pacote mega com proteção de 12 horas e toque ultra macio. Achadinho que some rápido!',
     'https://images.unsplash.com/photo-1544816155-12df9643f363?w=500&auto=format&fit=crop',
@@ -40,7 +40,7 @@ insert into public.products (
     'fralda-premium-toque-macio-pacote-mega', 'https://amazon.com.br'
 ),
 (
-    'p0000000-0000-0000-0000-000000000002',
+    'f0000000-0000-0000-0000-000000000002',
     'Kit Body Algodão Orgânico (5 peças)',
     'Conjunto de bodies em algodão pima, super respirável e durável. Tons neutros lindos.',
     'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=500&auto=format&fit=crop',
@@ -48,7 +48,7 @@ insert into public.products (
     'kit-body-algodao-organico-5-pecas', 'https://shopee.com.br'
 ),
 (
-    'p0000000-0000-0000-0000-000000000003',
+    'f0000000-0000-0000-0000-000000000003',
     'Brinquedos de Madeira Montessori',
     'Set educativo que estimula coordenação e criatividade. Material sustentável e seguro.',
     'https://images.unsplash.com/photo-1515488042361-404e9250afef?w=500&auto=format&fit=crop',
@@ -56,7 +56,7 @@ insert into public.products (
     'brinquedos-de-madeira-montessori', 'https://mercadolivre.com.br'
 ),
 (
-    'p0000000-0000-0000-0000-000000000004',
+    'f0000000-0000-0000-0000-000000000004',
     'Carrinho 3 em 1 Compacto Dobrável',
     'Dobra com uma mão, super leve e com reclínio total. Oferta limitada do Clube.',
     'https://images.unsplash.com/photo-1591938424202-7c37b755f718?w=500&auto=format&fit=crop',
@@ -64,7 +64,7 @@ insert into public.products (
     'carrinho-3-em-1-compacto-dobravel', 'https://magazineluiza.com.br'
 ),
 (
-    'p0000000-0000-0000-0000-000000000005',
+    'f0000000-0000-0000-0000-000000000005',
     'Kit Mamadeiras Anticólica (4 un.)',
     'Sistema anticólica avançado, bicos ultra suaves que imitam a amamentação.',
     'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=500&auto=format&fit=crop',
@@ -72,7 +72,7 @@ insert into public.products (
     'kit-mamadeiras-anticolica-4-un', 'https://amazon.com.br'
 ),
 (
-    'p0000000-0000-0000-0000-000000000006',
+    'f0000000-0000-0000-0000-000000000006',
     'Tênis Primeiros Passos Antiderrapante',
     'Sola flexível e antiderrapante, perfeito para os primeiros passinhos.',
     'https://images.unsplash.com/photo-1519457431-44ccd64a579b?w=500&auto=format&fit=crop',
@@ -80,7 +80,7 @@ insert into public.products (
     'tenis-primeiros-passos-antiderrapante', 'https://shopee.com.br'
 ),
 (
-    'p0000000-0000-0000-0000-000000000007',
+    'f0000000-0000-0000-0000-000000000007',
     'Fralda Noturna Extra Absorção',
     'Noites secas e tranquilas com absorção reforçada por 12h.',
     'https://images.unsplash.com/photo-1544816155-12df9643f363?w=500&auto=format&fit=crop',
@@ -88,7 +88,7 @@ insert into public.products (
     'fralda-noturna-extra-absorcao', 'https://mercadolivre.com.br'
 ),
 (
-    'p0000000-0000-0000-0000-000000000008',
+    'f0000000-0000-0000-0000-000000000008',
     'Macacão Plush Inverno Aconchego',
     'Quentinho, macio e estiloso. Edição limitada do Clube VIP.',
     'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=500&auto=format&fit=crop',
@@ -96,7 +96,7 @@ insert into public.products (
     'macacao-plush-inverno-aconchego', 'https://magazineluiza.com.br'
 ),
 (
-    'p0000000-0000-0000-0000-000000000009',
+    'f0000000-0000-0000-0000-000000000009',
     'Cubo de Atividades Sensorial',
     'Várias texturas e cores para estimular os sentidos do bebê.',
     'https://images.unsplash.com/photo-1515488042361-404e9250afef?w=500&auto=format&fit=crop',
@@ -104,7 +104,7 @@ insert into public.products (
     'cubo-de-atividades-sensorial', 'https://amazon.com.br'
 ),
 (
-    'p0000000-0000-0000-0000-000000000010',
+    'f0000000-0000-0000-0000-000000000010',
     'Copo de Transição com Alça',
     'Antivazamento e fácil de segurar. A transição perfeita.',
     'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=500&auto=format&fit=crop',
@@ -112,7 +112,7 @@ insert into public.products (
     'copo-de-transicao-com-alca', 'https://shopee.com.br'
 ),
 (
-    'p0000000-0000-0000-0000-000000000011',
+    'f0000000-0000-0000-0000-000000000011',
     'Sapatinho Couro Ecológico',
     'Confortável e respirável, com acabamento premium.',
     'https://images.unsplash.com/photo-1519457431-44ccd64a579b?w=500&auto=format&fit=crop',
@@ -120,7 +120,7 @@ insert into public.products (
     'sapatinho-couro-ecologico', 'https://mercadolivre.com.br'
 ),
 (
-    'p0000000-0000-0000-0000-000000000012',
+    'f0000000-0000-0000-0000-000000000012',
     'Mochila Escolar Térmica Infantil',
     'Compartimento térmico e design fofo. De volta às aulas!',
     'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=500&auto=format&fit=crop',
