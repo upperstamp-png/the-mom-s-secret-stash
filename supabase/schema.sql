@@ -29,7 +29,7 @@ create policy "Users can update their own profile" on public.profiles
 
 -- 2. Children table
 create table public.children (
-    id uuid default uuid_generate_v4() primary key,
+    id uuid default gen_random_uuid() primary key,
     profile_id uuid references public.profiles(id) on delete cascade not null,
     name text not null,
     age_months integer not null check (age_months >= 0),
@@ -84,7 +84,7 @@ create policy "Users can delete their own interests" on public.interests
 
 -- 5. Coupons table
 create table public.coupons (
-    id uuid default uuid_generate_v4() primary key,
+    id uuid default gen_random_uuid() primary key,
     code text unique not null,
     discount_value text,
     description text,
@@ -99,7 +99,7 @@ create policy "Allow read access to coupons for all users" on public.coupons
 
 -- 6. Products table
 create table public.products (
-    id uuid default uuid_generate_v4() primary key,
+    id uuid default gen_random_uuid() primary key,
     title text not null,
     description text,
     image_url text not null,
@@ -132,7 +132,7 @@ create policy "Allow read access to products for all users" on public.products
 
 -- 7. Offers table (specific time-limited deals or campaigns)
 create table public.offers (
-    id uuid default uuid_generate_v4() primary key,
+    id uuid default gen_random_uuid() primary key,
     product_id uuid references public.products(id) on delete cascade not null,
     title text not null,
     discount_percent integer,
@@ -149,7 +149,7 @@ create policy "Allow read access to offers for all users" on public.offers
 
 -- 8. AffiliateLinks table (for tracking and mapping redirects)
 create table public.affiliate_links (
-    id uuid default uuid_generate_v4() primary key,
+    id uuid default gen_random_uuid() primary key,
     product_id uuid references public.products(id) on delete cascade not null,
     destination_url text not null,
     param_tag text,
@@ -216,7 +216,7 @@ create policy "Users can manage their own push tokens" on public.push_tokens
 
 -- 12. Notifications table (Push history & scheduler)
 create table public.notifications (
-    id uuid default uuid_generate_v4() primary key,
+    id uuid default gen_random_uuid() primary key,
     title text not null,
     body text not null,
     target_segment jsonb, -- e.g., {"age_months_min": 12, "age_months_max": 24}
@@ -233,7 +233,7 @@ create policy "Users can read sent notifications" on public.notifications
 
 -- 13. Payments table
 create table public.payments (
-    id uuid default uuid_generate_v4() primary key,
+    id uuid default gen_random_uuid() primary key,
     profile_id uuid references public.profiles(id) on delete set null,
     amount numeric(10, 2) not null,
     payment_method text not null, -- 'stripe', 'mercadopago'
@@ -249,7 +249,7 @@ create policy "Users can view their own payments" on public.payments
 
 -- 14. Orders table (VIP Subscriptions / Purchases)
 create table public.orders (
-    id uuid default uuid_generate_v4() primary key,
+    id uuid default gen_random_uuid() primary key,
     profile_id uuid references public.profiles(id) on delete cascade not null,
     payment_id uuid references public.payments(id) on delete set null,
     status text not null, -- 'active', 'cancelled', 'expired'
@@ -281,7 +281,7 @@ create policy "Users can view their own VIP status" on public.vip_members
 
 -- 16. Analytics & Events table
 create table public.analytics_events (
-    id uuid default uuid_generate_v4() primary key,
+    id uuid default gen_random_uuid() primary key,
     profile_id uuid references public.profiles(id) on delete set null,
     event_type text not null, -- 'page_view', 'product_view', 'click_affiliate', 'share', 'favorite'
     product_id uuid references public.products(id) on delete set null,
@@ -300,7 +300,7 @@ create policy "Allow inserts to analytics events for anyone" on public.analytics
 
 -- 17. Clicks table
 create table public.clicks (
-    id uuid default uuid_generate_v4() primary key,
+    id uuid default gen_random_uuid() primary key,
     profile_id uuid references public.profiles(id) on delete set null,
     product_id uuid references public.products(id) on delete set null,
     referrer text,
@@ -314,7 +314,7 @@ create policy "Allow inserts to clicks for anyone" on public.clicks
 
 -- 18. Conversions table
 create table public.conversions (
-    id uuid default uuid_generate_v4() primary key,
+    id uuid default gen_random_uuid() primary key,
     profile_id uuid references public.profiles(id) on delete set null,
     product_id uuid references public.products(id) on delete set null,
     amount numeric(10, 2),
@@ -352,7 +352,7 @@ create policy "Allow select for verified admins" on public.admin_users
 
 -- 21. CrawlerJobs table (Tracking automatic marketplace crawlers)
 create table public.crawler_jobs (
-    id uuid default uuid_generate_v4() primary key,
+    id uuid default gen_random_uuid() primary key,
     marketplace text not null, -- 'Amazon', 'Shopee', etc.
     status text not null, -- 'running', 'success', 'failed'
     products_imported integer default 0 not null,
@@ -365,7 +365,7 @@ alter table public.crawler_jobs enable row level security;
 
 -- 22. PriceHistory table (Product price changes over time)
 create table public.price_history (
-    id uuid default uuid_generate_v4() primary key,
+    id uuid default gen_random_uuid() primary key,
     product_id uuid references public.products(id) on delete cascade not null,
     price numeric(10, 2) not null check (price >= 0),
     recorded_at timestamp with time zone default timezone('utc'::text, now()) not null
@@ -378,7 +378,7 @@ create policy "Allow read access to price history for all users" on public.price
 
 -- 23. InstagramPosts table
 create table public.instagram_posts (
-    id uuid default uuid_generate_v4() primary key,
+    id uuid default gen_random_uuid() primary key,
     product_id uuid references public.products(id) on delete cascade not null,
     caption text not null,
     hashtags text,
@@ -393,7 +393,7 @@ alter table public.instagram_posts enable row level security;
 
 -- 24. WhatsappCampaigns table
 create table public.whatsapp_campaigns (
-    id uuid default uuid_generate_v4() primary key,
+    id uuid default gen_random_uuid() primary key,
     title text not null,
     message text not null,
     target_segment jsonb,
