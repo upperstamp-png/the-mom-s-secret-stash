@@ -1,4 +1,4 @@
-import { useEffect, useSyncExternalStore, useCallback } from "react";
+import { useEffect, useSyncExternalStore, useCallback, useState } from "react";
 
 /* -------------------------------------------------------------------------- */
 /*  Tiny localStorage-backed reactive store (client-only).                    */
@@ -211,11 +211,11 @@ export function useFavorites() {
 /* ----------------------------- Hydration guard ---------------------------- */
 
 export function useHydrated() {
-  return useSyncExternalStore(
-    () => () => {},
-    () => true,
-    () => false,
-  );
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => {
+    setHydrated(true);
+  }, []);
+  return hydrated;
 }
 
 /* ----------------------------- Click analytics ---------------------------- */
