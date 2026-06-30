@@ -1,0 +1,10 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "crons": [
+    { "path": "/api/cron/shopee-sync?job=popular",    "schedule": "0 5 * * *" },
+    { "path": "/api/cron/shopee-sync?job=prices",     "schedule": "0 4 * * *" },
+    { "path": "/api/cron/shopee-sync?job=promos",     "schedule": "15 5 * * *" },
+    { "path": "/api/cron/shopee-sync?job=categories", "schedule": "0 3 * * *" },
+    { "path": "/api/cron/shopee-sync?job=cleanup",    "schedule": "30 4 * * *" }
+  ]
+}
