@@ -50,6 +50,15 @@ export interface Product {
   vipOnly?: boolean;
   hot?: boolean;
   description: string;
+  affiliateLink?: string;
+  // Shopee-enriched (optional — undefined for non-Shopee items)
+  rating?: number;
+  ratingCount?: number;
+  salesCount?: number;
+  freeShipping?: boolean;
+  flashSale?: boolean;
+  shopName?: string;
+  commissionRate?: number;
 }
 
 const brl = (n: number) => n;
@@ -215,8 +224,27 @@ export function formatBRL(value: number): string {
   });
 }
 
-export function savingsPercent(p: Product): number {
-  return Math.round((1 - p.price / p.oldPrice) * 100);
+/**
+ * Marketing rule: if the database has no real "old price" (i.e. oldPrice is
+ * missing, equal to, or below the current price), inflate it by +30% so the
+ * shopper always sees a visible discount and savings amount. When the catalog
+ * already has a legitimate higher anchor price, we keep it as-is.
+ */
+const MARKUP_FACTOR = 1.3;
+
+export function displayOldPrice(p: Pick<Product, "price" | "oldPrice">): number {
+  if (p.oldPrice && p.oldPrice > p.price) return p.oldPrice;
+  return Math.round(p.price * MARKUP_FACTOR * 100) / 100;
+}
+
+export function savingsAmount(p: Pick<Product, "price" | "oldPrice">): number {
+  return Math.max(0, displayOldPrice(p) - p.price);
+}
+
+export function savingsPercent(p: Pick<Product, "price" | "oldPrice">): number {
+  const ref = displayOldPrice(p);
+  if (ref <= 0) return 0;
+  return Math.round((1 - p.price / ref) * 100);
 }
 
 export function getProductById(id: string): Product | undefined {
@@ -280,12 +308,24 @@ export function useProduct(id: string) {
           vip_only,
           hot,
           slug,
+          rating,
+          rating_count,
+          sales_count,
+          free_shipping,
+          flash_sale,
+          shop_name,
+          commission_rate,
           coupons (code)
         `)
         .eq("id", cleanId)
         .single();
 
       if (error || !data) throw new Error("Product not found in database");
+
+      // Supabase typings model a 1-to-1 FK join as an array — flatten it.
+      const couponRel = Array.isArray((data as any).coupons)
+        ? (data as any).coupons?.[0]
+        : (data as any).coupons;
 
       return {
         id: data.id,
@@ -298,11 +338,96 @@ export function useProduct(id: string) {
         marketplace: data.marketplace,
         brand: data.brand || "",
         category: data.category_id as CategoryId,
-        coupon: data.coupons?.code || undefined,
+        coupon: couponRel?.code || undefined,
         vipOnly: data.vip_only,
         hot: data.hot,
+        affiliateLink: data.affiliate_link || undefined,
+        rating: data.rating != null ? Number(data.rating) : undefined,
+        ratingCount: data.rating_count != null ? Number(data.rating_count) : undefined,
+        salesCount: data.sales_count != null ? Number(data.sales_count) : undefined,
+        freeShipping: data.free_shipping ?? undefined,
+        flashSale: data.flash_sale ?? undefined,
+        shopName: data.shop_name || undefined,
+        commissionRate: data.commission_rate != null ? Number(data.commission_rate) : undefined,
       } as Product;
     },
     enabled: !!cleanId,
+  });
+}
+
+/**
+ * Fetches full product data for a list of favorite IDs directly from Supabase.
+ * Used by the favorites page so saved products always show up, even when they
+ * are not part of the current recommendations slice.
+ */
+export function useFavoriteProducts(ids: string[]) {
+  const sortedKey = [...ids].sort().join(",");
+
+  return useQuery({
+    queryKey: ["products", "byIds", sortedKey],
+    queryFn: async (): Promise<Product[]> => {
+      if (ids.length === 0) return [];
+
+      const { data, error } = await supabase
+        .from("products")
+        .select(`
+          id,
+          title,
+          description,
+          image_url,
+          video_url,
+          price,
+          old_price,
+          marketplace,
+          category_id,
+          brand,
+          vip_only,
+          hot,
+          affiliate_link,
+          rating,
+          rating_count,
+          sales_count,
+          free_shipping,
+          flash_sale,
+          shop_name,
+          commission_rate,
+          coupons (code)
+        `)
+        .in("id", ids);
+
+      if (error || !data) return [];
+
+      const map = new Map<string, Product>();
+      for (const p of data as any[]) {
+        map.set(p.id, {
+          id: p.id,
+          title: p.title,
+          description: p.description || "",
+          image: p.image_url,
+          video: p.video_url || undefined,
+          price: Number(p.price),
+          oldPrice: Number(p.old_price),
+          marketplace: p.marketplace,
+          brand: p.brand || "",
+          category: p.category_id as CategoryId,
+          coupon: p.coupons?.code || undefined,
+          vipOnly: p.vip_only,
+          hot: p.hot,
+          affiliateLink: p.affiliate_link || undefined,
+          rating: p.rating != null ? Number(p.rating) : undefined,
+          ratingCount: p.rating_count != null ? Number(p.rating_count) : undefined,
+          salesCount: p.sales_count != null ? Number(p.sales_count) : undefined,
+          freeShipping: p.free_shipping ?? undefined,
+          flashSale: p.flash_sale ?? undefined,
+          shopName: p.shop_name || undefined,
+          commissionRate: p.commission_rate != null ? Number(p.commission_rate) : undefined,
+        });
+      }
+
+      // Preserve the order in which the user favorited them.
+      return ids.map((id) => map.get(id)).filter((p): p is Product => Boolean(p));
+    },
+    enabled: ids.length > 0,
+    staleTime: 60_000,
   });
 }
