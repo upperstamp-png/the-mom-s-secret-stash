@@ -33,7 +33,8 @@ export async function registerPushNotifications() {
 
       subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
+        // Cast keeps lib.dom typings happy across TS releases (BufferSource expects ArrayBuffer).
+        applicationServerKey: urlBase64ToUint8Array(vapidPublicKey) as unknown as BufferSource,
       });
     }
 
